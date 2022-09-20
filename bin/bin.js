@@ -1,4 +1,8 @@
 #!/usr/bin/env node
 
 require("ts-node/register");
-require("../src/index.ts");
+const { init } = require("../src/index");
+
+(async () => {
+  await init();
+})();
