@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 require("ts-node/register");
-const { init } = require("../src/index");
+const { init } = require("../src/utils/prompt");
 
 (async () => {
-  await init();
+  await init.next();
 })();
