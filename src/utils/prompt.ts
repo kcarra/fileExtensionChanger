@@ -2,15 +2,20 @@ const readline = require("node:readline");
 const util = require("node:util");
 
 type PromptStage = {
-  stage1: string;
-  stage2: string;
+  fileFrom: string;
+  fileTo: string;
+  threading: string;
 };
 
 let fileExtensionFrom = "";
 let fileExtensionTo = "";
 
-function _underline(word: string): string {
-  return `"\e[3m ${word} \e[23m"`;
+function _hideCursor(): string {
+  return "\u001B[?25l";
+}
+
+function _showCursor(): string {
+  return "\u001B[?25h";
 }
 
 // Colors
@@ -21,7 +26,7 @@ const colors = {
 };
 
 // Prompt stage
-let promptStage: keyof PromptStage = "stage1";
+let promptStage: keyof PromptStage = "threading";
 
 let option = 0;
 
@@ -45,7 +50,9 @@ function renderOptions(selection: number): string {
       ? `${colors.green}> no${colors.reset}`
       : `${colors.blue}  no${colors.reset}`;
 
-  return `${colors.blue}Run in a worker thread pool?${colors.reset}\n${yes}\n${no}\n\u001B[?25l`;
+  return `${colors.blue}Run in a worker thread pool?${
+    colors.reset
+  }\n${yes}\n${no}\n${_hideCursor()}`;
 }
 
 const rl = readline.createInterface({
@@ -60,11 +67,14 @@ async function question(question: string): Promise<string> {
   });
 }
 
-// Initial prompt message, comment for now
-// rl.prompt();
-
+// On exit events show the cursor again
 rl.on("SIGINT", () => {
+  process.stdout.write(_showCursor());
   rl.close();
+});
+
+rl.on("close", () => {
+  process.stdout.write(_showCursor());
 });
 
 const stage2KeyHandler: { [key: string]: () => void } = {
@@ -83,28 +93,15 @@ const stage2KeyHandler: { [key: string]: () => void } = {
     }
   },
   return: () => {
-    console.log(option);
-    rl.close();
+    init.next();
   },
-};
-
-const stage1KeyHandler: { [key: string]: () => void } = {
-  return: () => {},
 };
 
 process.stdin.on("keypress", (c, k: { name: string }) => {
   const { name } = k;
 
   switch (promptStage) {
-    case "stage1":
-      // do invoke stage1 keyhandler
-      try {
-        stage1KeyHandler[name]();
-      } catch (error) {
-        break;
-      }
-      break;
-    case "stage2":
+    case "threading":
       // do invoke stage2 keyhandler
       try {
         stage2KeyHandler[name]();
@@ -118,37 +115,35 @@ process.stdin.on("keypress", (c, k: { name: string }) => {
 });
 
 async function fileFrom() {
+  promptStage = "fileFrom";
   const answer = await question(
     `File extension ${colors.green}from${colors.reset} (press enter when done): `
   );
-
   fileExtensionFrom = answer.trim();
-
   // move to the next question
   init.next();
 }
 
 async function fileTo() {
+  promptStage = "fileTo";
   const answer = await question(
     `File extension ${colors.green}to${colors.reset} (press enter when done): `
   );
-
   fileExtensionTo = answer.trim();
 
-  // move to the next question
-  init.next();
+  rl.close();
 }
 
 function threading() {
-  promptStage = "stage2";
+  promptStage = "threading";
   _clearPrompt();
   _render(renderOptions(0));
 }
 
 async function* steps() {
+  yield threading();
   yield await fileFrom();
   yield await fileTo();
-  yield threading();
 }
 
 export const init = steps();
