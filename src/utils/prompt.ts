@@ -125,13 +125,11 @@ async function fileFrom() {
 }
 
 async function fileTo() {
-  promptStage = "fileTo";
+  // promptStage = "fileTo";
   const answer = await question(
     `File extension ${colors.green}to${colors.reset} (press enter when done): `
   );
   fileExtensionTo = answer.trim();
-
-  rl.close();
 }
 
 function threading() {
@@ -141,9 +139,10 @@ function threading() {
 }
 
 async function* steps() {
-  yield threading();
-  yield await fileFrom();
+  // yield threading();
+  // yield await fileFrom();
   yield await fileTo();
+  rl.close();
 }
 
 export const init = steps();
