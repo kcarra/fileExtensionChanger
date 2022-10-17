@@ -18,6 +18,7 @@ export type PromptState = {
   fileExtensionFrom: string;
   fileExtensionTo: string;
   promptStage: keyof PromptStage;
+  files: Array<string>;
 };
 
 let state: PromptState = {
@@ -26,6 +27,7 @@ let state: PromptState = {
   fileExtensionFrom: "",
   fileExtensionTo: "",
   promptStage: "threading",
+  files: [],
 };
 
 const rl = readline.createInterface({
